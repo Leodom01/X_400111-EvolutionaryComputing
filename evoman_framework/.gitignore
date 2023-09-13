@@ -1,3 +1,6 @@
+MAIN/
+MAIN_VIS/
+
 __pycache__/
 *.py[cod]
 *$py.class
