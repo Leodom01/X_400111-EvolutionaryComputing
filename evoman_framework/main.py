@@ -5,15 +5,20 @@ from leap_ec.real_rep.initializers import create_real_vector
 from leap_ec.real_rep.ops import mutate_gaussian
 from leap_ec.problem import FunctionProblem
 from leap_ec import ops
+from leap_ec.probe import FitnessStatsCSVProbe
 
 import numpy as np
+
+
+from matplotlib import pyplot as plt
 
 from environment import training_environment
 
 # PARAMETERS
 
-MAX_GENERATIONS = 300
+MAX_GENERATIONS = 30
 POPULATION_SIZE = 100
+ELITISM = 5
 
 # END PARAMETERS
 
@@ -21,7 +26,7 @@ POPULATION_SIZE = 100
 import os
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-neurons_number, env = training_environment()
+neurons_number, env = training_environment([1])
 
 def evaluate(phenome):
     f, _, _, _ = env.play(phenome)
@@ -33,7 +38,7 @@ problem = FunctionProblem(
 )
 
 # Bound for the sampling
-a = 100000000000
+a = 10_0000
 bounds = [(-a, a)] * neurons_number
 representation = Representation(
     decoder=IdentityDecoder(),
@@ -41,25 +46,32 @@ representation = Representation(
     initialize=create_real_vector(bounds)
 )
 
+
+fitness_probe = FitnessStatsCSVProbe()
+
 out = generational_ea(
-    MAX_GENERATIONS,
-    POPULATION_SIZE,
-    problem,
-    representation,
+    max_generations=MAX_GENERATIONS,
+    pop_size=POPULATION_SIZE,
+    problem=problem,
+    representation=representation,
+    k_elites=ELITISM,
     # Evolution Pipeline
-    [
-	ops.tournament_selection(k=2),
+    pipeline=[
+        fitness_probe,
+
+	#ops.tournament_selection(k=2),
+        ops.proportional_selection(offset='pop-min'),
+
         ops.clone,
+
 	ops.uniform_crossover,
         mutate_gaussian(std=0.5, expected_num_mutations=1),
+
         ops.evaluate,
         ops.pool(size=POPULATION_SIZE),
     ]
 )
 
 for i, best in out:
-    print(f"{i}, {best}")
-
-input("ENTER TO SHOW THE PLAY")
-np.savetxt("train.txt", best.decode())
+    np.savetxt("train.txt", best.decode())
 
