@@ -39,7 +39,7 @@ for experiment_name in experimens_directories:
 
 		def plot_mean_std(axis, df, name):
 			df["avg"].plot(
-				label=f"{experiment_name} ** {name}",
+				label=f"({experiment_name}) {name}",
 				ax=axis,
 				legend = True
 			)

@@ -9,6 +9,8 @@ from leap_ec.probe import FitnessStatsCSVProbe, pairwise_squared_distance_metric
 
 from matplotlib import shutil
 
+from toolz import curry
+
 from environment import training_environment
 
 import collections
@@ -48,8 +50,34 @@ representation = Representation(
 
 # EXPERIMENT_CONFIG
 TRIES = 5
-EXPERIMENT_NAME = "2pt_crossover"
+EXPERIMENT_NAME = "whole_arithmetic_recombination_07"
 # END EXPERIMENT_CONFIG
+
+@curry
+@ops.iteriter_op
+def whole_arithmetic_recombination(next_individual, alpha = 0.5):
+    def _whole_arithmetic_recombination(parent1, parent2, alpha):
+        tmp = alpha * parent1.genome + (1 - alpha) * parent2.genome
+        parent2.genome = (1 - alpha) * parent1.genome + alpha * parent2.genome
+        parent1.genome = tmp
+
+        return parent1, parent2
+
+    while True:
+        parent1 = next(next_individual)
+        parent2 = next(next_individual)
+
+        child1, child2 = _whole_arithmetic_recombination(
+            parent1, 
+            parent2, 
+            alpha
+        )
+
+        child1.fitness = child2.fitness = None
+
+        yield child1
+        yield child2
+
 
 dir = f"./data/{EXPERIMENT_NAME}"
 if os.path.exists(dir):
@@ -87,13 +115,15 @@ for try_number in range(TRIES):
             ops.clone,
 
             #ops.uniform_crossover,
-            ops.n_ary_crossover(num_points=2),
+            # ops.n_ary_crossover(num_points=2),
+            whole_arithmetic_recombination(alpha=0.7),
             mutate_gaussian(std=0.05, expected_num_mutations='isotropic'),
 
             ops.evaluate,
             ops.pool(size=POPULATION_SIZE),
         ]
     )
+
     collections.deque(out, maxlen=0)
 
     end_time = time.time()
