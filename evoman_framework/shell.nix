@@ -11,6 +11,7 @@ let
             leap_ec
             numpy
             pygame
+            pandas
         '';
     };
 in

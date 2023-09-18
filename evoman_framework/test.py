@@ -1,8 +1,9 @@
 from environment import eval_environment
 import numpy as np
 
-_, env = eval_environment([1])
-solution = np.loadtxt("trained/train-enemy1.txt")
+_, env = eval_environment([2])
+#solution = np.loadtxt("trained/train-enemy2.txt")
+solution = np.loadtxt("train.txt")
 
 print("Loaded solution:", solution)
 

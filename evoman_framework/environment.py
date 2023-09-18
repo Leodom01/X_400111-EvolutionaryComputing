@@ -9,7 +9,7 @@ def training_environment(enemies=[8]):
 	simulation speed.
 	'''
 	env = Environment(
-		experiment_name="MAIN",
+		experiment_name="demo/MAIN",
 		enemies=enemies,
 		playermode="ai",
 		player_controller=player_controller(_HIDDEN_NEURONS_NUMBER),
@@ -30,7 +30,7 @@ def eval_environment(enemies=[8]):
 	standard simulation speed.
 	'''
 	env = Environment(
-		experiment_name="MAIN_VIS",
+		experiment_name="demo/MAIN_VIS",
 		enemies=enemies,
 		playermode="ai",
 		player_controller=player_controller(_HIDDEN_NEURONS_NUMBER),
