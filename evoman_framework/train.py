@@ -8,7 +8,7 @@ from leap_ec import ops
 from leap_ec.probe import FitnessStatsCSVProbe, pairwise_squared_distance_metric
 
 from matplotlib import shutil
-
+import numpy as np
 from toolz import curry
 
 from environment import training_environment
@@ -49,8 +49,8 @@ representation = Representation(
 )
 
 # EXPERIMENT_CONFIG
-TRIES = 5
-EXPERIMENT_NAME = "whole_arithmetic_recombination_07"
+TRIES = 10
+EXPERIMENT_NAME = "2pt_crossover"
 # END EXPERIMENT_CONFIG
 
 @curry
@@ -110,13 +110,14 @@ for try_number in range(TRIES):
         pipeline=[
             fitness_probe,
 
-            ops.proportional_selection(offset='pop-min'),
+            # ops.proportional_selection(offset='pop-min'),
+            ops.tournament_selection(k=10),
 
             ops.clone,
 
-            #ops.uniform_crossover,
-            # ops.n_ary_crossover(num_points=2),
-            whole_arithmetic_recombination(alpha=0.7),
+            # ops.uniform_crossover,
+            ops.n_ary_crossover(num_points=2),
+            # whole_arithmetic_recombination(alpha=0.7),
             mutate_gaussian(std=0.05, expected_num_mutations='isotropic'),
 
             ops.evaluate,
@@ -124,7 +125,10 @@ for try_number in range(TRIES):
         ]
     )
 
-    collections.deque(out, maxlen=0)
+    queue = collections.deque(out, maxlen=1)
+    
+    best_individual = queue.pop()[1].decode() 
+    np.savetxt(f"{dir}/individual-{try_number}.txt", best_individual)
 
     end_time = time.time()
     duration = end_time - start_time

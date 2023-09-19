@@ -63,3 +63,4 @@ for experiment_name in experimens_directories:
 
 fig.show()
 plt.show()
+axs[0].savefig("plt.png")

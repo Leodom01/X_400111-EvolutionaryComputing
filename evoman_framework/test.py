@@ -2,10 +2,11 @@ from environment import eval_environment
 import numpy as np
 
 _, env = eval_environment([2])
-#solution = np.loadtxt("trained/train-enemy2.txt")
-solution = np.loadtxt("train.txt")
 
-print("Loaded solution:", solution)
+base = "./data/whole_arithmetic_recombination_07/"
+for i in range(10):
+	solution = np.loadtxt(f"{base}/individual-{i}.txt")
 
-print(env.play(pcont=solution))
+	f, _, _, _ = env.play(pcont=solution) # type:ignore
+	print(f"Individual {i} fitness: {f}")
 
