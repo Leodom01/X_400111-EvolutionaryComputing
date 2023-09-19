@@ -17,42 +17,6 @@ import collections
 import time
 import math
 
-
-# PARAMETERS
-MAX_GENERATIONS = 150
-POPULATION_SIZE = 100
-ELITISM = 1
-# END PARAMETERS
-
-# To run pygame headless
-import os
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-
-neurons_number, env = training_environment([2])
-
-def evaluate(phenome):
-    f, _, _, _ = env.play(phenome)
-    return f
-
-problem = FunctionProblem(
-    evaluate,
-    maximize=True
-)
-
-# Bound for the sampling
-a = 10_0000
-bounds = [(-a, a)] * neurons_number
-representation = Representation(
-    decoder=IdentityDecoder(),
-    # We inizialize sampling from a normal distribution
-    initialize=create_real_vector(bounds)
-)
-
-# EXPERIMENT_CONFIG
-TRIES = 10
-EXPERIMENT_NAME = "2pt_crossover"
-# END EXPERIMENT_CONFIG
-
 @curry
 @ops.iteriter_op
 def whole_arithmetic_recombination(next_individual, alpha = 0.5):
@@ -78,64 +42,114 @@ def whole_arithmetic_recombination(next_individual, alpha = 0.5):
         yield child1
         yield child2
 
+# HYPER PARAMETERS
+MAX_GENERATIONS = 50
+POPULATION_SIZE = 100
+ELITISM = 0
+# END HYPER PARAMETERS
 
-dir = f"./data/{EXPERIMENT_NAME}"
-if os.path.exists(dir):
-    shutil.rmtree(dir)
-    
-os.makedirs(dir)
+# META PARAMETERS
+TRIES = 10
+# END META PARAMETERS
 
-for try_number in range(TRIES):
+# EXPERIMENTS
 
-    print(f"Starting run {try_number} for experiment {EXPERIMENT_NAME}")
-    
-    stream = open(f"{dir}/run-{try_number}.csv", "w+")
-    fitness_probe = FitnessStatsCSVProbe(
-        stream=stream,
-        extra_metrics={
-            # Compute the genetic diversity by distance between vectors
-            "sq_disance_diversity": pairwise_squared_distance_metric
-        }
-    )
+experiments = [
+    ("2pt_crossover", ops.n_ary_crossover(num_points=2)),
+    ("uniform_crossover", ops.uniform_crossover),
+    ("whole_arithmetic_recombination", whole_arithmetic_recombination),
+    ("whole_arithmetic_recombination_07", whole_arithmetic_recombination(
+        alpha=0.7
+    )), # type: ignore
+]
 
-    start_time = time.time()
-    
-    out = generational_ea(
-        max_generations=MAX_GENERATIONS,
-        pop_size=POPULATION_SIZE,
-        problem=problem,
-        representation=representation,
-        k_elites=ELITISM,
-        # Evolution Pipeline
-        pipeline=[
-            fitness_probe,
+# To run pygame headless
+import os
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-            # ops.proportional_selection(offset='pop-min'),
-            ops.tournament_selection(k=10),
+neurons_number, env = training_environment([2])
 
-            ops.clone,
+def evaluate(phenome):
+    f, _, _, _ = env.play(phenome)
+    return f
 
-            # ops.uniform_crossover,
-            ops.n_ary_crossover(num_points=2),
-            # whole_arithmetic_recombination(alpha=0.7),
-            mutate_gaussian(std=0.05, expected_num_mutations='isotropic'),
+problem = FunctionProblem(
+    evaluate,
+    maximize=True
+)
 
-            ops.evaluate,
-            ops.pool(size=POPULATION_SIZE),
-        ]
-    )
+# Bound for the sampling
+a = 10_0000
+bounds = [(-a, a)] * neurons_number
+representation = Representation(
+    decoder=IdentityDecoder(),
+    # We inizialize sampling from a normal distribution
+    initialize=create_real_vector(bounds)
+)
 
-    queue = collections.deque(out, maxlen=1)
-    
-    best_individual = queue.pop()[1].decode() 
-    np.savetxt(f"{dir}/individual-{try_number}.txt", best_individual)
+def run_experiment(experiment_name, crossover):
 
-    end_time = time.time()
-    duration = end_time - start_time
-    
+    dir = f"./data/{experiment_name}"
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+        
+    os.makedirs(dir)
 
-    print(f"Finished run {try_number} for experiment {EXPERIMENT_NAME}"
-          f" took {math.floor(duration)} seconds")
+    for try_number in range(TRIES):
 
-    stream.close()
+        print(f"Starting run {try_number} for experiment {experiment_name}")
+        
+        stream = open(f"{dir}/run-{try_number}.csv", "w+")
+        fitness_probe = FitnessStatsCSVProbe(
+            stream=stream,
+            extra_metrics={
+                # Compute the genetic diversity by distance between vectors
+                "sq_disance_diversity": pairwise_squared_distance_metric
+            }
+        )
 
+        start_time = time.time()
+        
+        out = generational_ea(
+            max_generations=MAX_GENERATIONS,
+            pop_size=POPULATION_SIZE,
+            problem=problem,
+            representation=representation,
+            k_elites=ELITISM,
+            # Evolution Pipeline
+            pipeline=[
+                fitness_probe,
+
+                ops.tournament_selection(k=10),
+
+                ops.clone,
+
+                crossover,
+                mutate_gaussian(std=0.05, expected_num_mutations='isotropic'),
+
+                ops.evaluate,
+                ops.pool(size=POPULATION_SIZE),
+            ]
+        )
+
+        best_individual = None
+        best_fitness = -1
+        for _, best in out:
+            if best.fitness > best_fitness:
+                best_individual = best.decode()
+        
+        if best_individual is not None:
+            np.savetxt(f"{dir}/individual-{try_number}.txt", best_individual)
+
+        end_time = time.time()
+        duration = end_time - start_time
+        
+
+        print(f"Finished run {try_number} for experiment {experiment_name}"
+              f" took {math.floor(duration)} seconds")
+
+        stream.close()
+
+for experiment_name, crossover in experiments:
+    print(f"Running experiment: {experiment_name}")
+    run_experiment(experiment_name, crossover)

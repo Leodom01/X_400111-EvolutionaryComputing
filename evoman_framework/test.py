@@ -3,7 +3,7 @@ import numpy as np
 
 _, env = eval_environment([2])
 
-base = "./data/whole_arithmetic_recombination_07/"
+base = "./data/2pt_crossover"
 for i in range(10):
 	solution = np.loadtxt(f"{base}/individual-{i}.txt")
 
