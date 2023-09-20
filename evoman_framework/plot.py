@@ -8,7 +8,7 @@ experimens_directories = os.listdir(data_dir)
 
 print(f"Found experiments: {experimens_directories}")
 
-fig, axs = plt.subplots(3)
+fig, axs = plt.subplots(2)
 
 for experiment_name in experimens_directories:
 
@@ -18,17 +18,21 @@ for experiment_name in experimens_directories:
 
 	for experiment_file in experiments_files:
 		if not experiment_file.endswith(".csv"): continue
-
-		df = pd.read_csv(
-			f"{dir}/{experiment_file}", 
-			sep=", ", # type: ignore
-			engine="python"
-		)
-		experiments.append(df)
+		
+		try:
+			df = pd.read_csv(
+				f"{dir}/{experiment_file}", 
+				sep=", ", # type: ignore
+				engine="python"
+			)
+			experiments.append(df)
+		except:
+			pass
 
 	print(f"Loaded {len(experiments)} experiments in {experiment_name}")
 
 	def plot_column(axis, dfs, column):
+		if dfs == []: return
 
 		def compute_mean_std(dfs, column):
 			df = pd.concat(dfs)    \
@@ -56,10 +60,10 @@ for experiment_name in experimens_directories:
 
 
 	plot_column(axs[0], experiments, "mean_fitness")
-	plot_column(axs[0], experiments, "max_fitness")
-	#plot_column(axs[0], experiments, "min_fitness")
-	plot_column(axs[1], experiments, "std_fitness")
-	plot_column(axs[2], experiments, "sq_disance_diversity")
+	# plot_column(axs[0], experiments, "max_fitness")
+	# plot_column(axs[0], experiments, "min_fitness")
+	# plot_column(axs[2], experiments, "std_fitness")
+	plot_column(axs[1], experiments, "sq_disance_diversity")
 
 fig.show()
 plt.show()
