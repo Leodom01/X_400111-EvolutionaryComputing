@@ -22,7 +22,7 @@ for experiment_name in experimens_directories:
 		try:
 			df = pd.read_csv(
 				f"{dir}/{experiment_file}", 
-				sep=", ", # type: ignore
+				#sep=", ", # type: ignore
 				engine="python"
 			)
 			experiments.append(df)
@@ -63,7 +63,7 @@ for experiment_name in experimens_directories:
 	# plot_column(axs[0], experiments, "max_fitness")
 	# plot_column(axs[0], experiments, "min_fitness")
 	# plot_column(axs[2], experiments, "std_fitness")
-	plot_column(axs[1], experiments, "sq_disance_diversity")
+	plot_column(axs[1], experiments, "sq_distance_diversity")
 
 fig.show()
 plt.show()
