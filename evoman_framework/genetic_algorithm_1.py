@@ -69,13 +69,12 @@ def tournament_selection(parent_size, tournament_size, p, p_f):
         yield single_tournament()
 
 
-def komma_selection(env, amount, offspring):
+def komma_selection(env, amount, offspring, fit_scores):
     """
     survivor selection using the komma strategy
     best amount of offspring is selected
     returns new population and fitness scores
     """
-    fit_scores = evaluate(env, offspring)
     best_indices = fit_scores.argsort()[-amount:]
     fit_scores = np.array([fit_scores[child] for child in best_indices])
     population = np.array([offspring[child] for child in best_indices])
@@ -176,7 +175,7 @@ def whole_arithmetic_crossover(parents, child_size, alpha):
 
 
 
-def run_experiments(n, enemy, use_2pt_crossover=True):
+def run_experiments(n, enemy, use_2pt_crossover=True, use_plus_selection=True):
     """
     TODO: (OLD)
     - function should run n amount of experiments, and writes to file
@@ -195,12 +194,12 @@ def run_experiments(n, enemy, use_2pt_crossover=True):
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     n_vars = 265
     population_size = 100
-    n_generations = 5
-    parent_size = 10
+    n_generations = 20
+    parent_size = 20
     children_size = 1.5 * population_size
     tournament_size = 20
     alpha = 0.5
-    mutation_rate = 0.1
+    mutation_rate = 0.05
     w_low = -1
     w_high = 1
 
@@ -208,7 +207,7 @@ def run_experiments(n, enemy, use_2pt_crossover=True):
     crossover = whole_arithmetic_crossover
     if use_2pt_crossover:
         crossover = two_point_crossover
-    name = crossover.__name__ + "_EA"
+    name = crossover.__name__ + 'use_plus_selection=' + str(use_plus_selection) + "_EA"
     if not os.path.exists(name):
         os.makedirs(name)
 
@@ -240,7 +239,11 @@ def run_experiments(n, enemy, use_2pt_crossover=True):
             else:
                 offspring = np.array([child for child in crossover(parents, children_size, alpha)])
             offspring = np.array([gaussian_mutation(child, mutation_rate, w_low, w_high) for child in offspring])
-            population, fit_scores = komma_selection(env, population_size, offspring)
+            offspring_fit = evaluate(env, offspring)
+            if use_plus_selection:
+                offspring = np.concatenate((population, offspring), axis=0)
+                offspring_fit = np.concatenate((fit_scores, offspring_fit))
+            population, fit_scores = komma_selection(env, population_size, offspring, offspring_fit)
 
         #np.savetxt(name+'/best.txt',population[np.argmax(fit_scores)])
         dump_it(run,temp_matrix_for_dumping,name)
