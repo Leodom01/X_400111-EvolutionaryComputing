@@ -13,7 +13,6 @@ from toolz import curry
 
 from environment import training_environment
 
-import collections
 import time
 import math
 
@@ -42,6 +41,49 @@ def whole_arithmetic_recombination(next_individual, alpha = 0.5):
         yield child1
         yield child2
 
+@curry
+@ops.iteriter_op
+def random_arithmetic_recombination(next_individual):
+    def _random_arithmetic_recombination(parent1, parent2):
+        alpha = np.random.uniform()
+        tmp = alpha * parent1.genome + (1 - alpha) * parent2.genome
+        parent2.genome = (1 - alpha) * parent1.genome + alpha * parent2.genome
+        parent1.genome = tmp
+
+        return parent1, parent2
+
+    while True:
+        parent1 = next(next_individual)
+        parent2 = next(next_individual)
+
+        child1, child2 = _random_arithmetic_recombination(
+            parent1, 
+            parent2, 
+        )
+
+        child1.fitness = child2.fitness = None
+
+        yield child1
+        yield child2
+
+@curry
+@ops.iteriter_op
+def no_crossover(next_individual):
+    def _no_crossover(parent1, parent2):
+        return parent1, parent2
+
+    while True:
+        parent1 = next(next_individual)
+        parent2 = next(next_individual)
+
+        child1, child2 = _no_crossover(
+            parent1, 
+            parent2, 
+        )
+
+        yield child1
+        yield child2
+
 # HYPER PARAMETERS
 MAX_GENERATIONS = 50
 POPULATION_SIZE = 100
@@ -61,13 +103,18 @@ experiments = [
     ("whole_arithmetic_recombination_07", whole_arithmetic_recombination(
         alpha=0.7
     )), # type: ignore
+    ("whole_arithmetic_recombination_09", whole_arithmetic_recombination(
+        alpha=0.9
+    )), # type: ignore
+    ("random_arithmetic_recombination", random_arithmetic_recombination),
+    ("no_crossover", no_crossover),
 ]
 
 # To run pygame headless
 import os
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-neurons_number, env = training_environment([2])
+neurons_number, env = training_environment([6])
 
 def evaluate(phenome):
     f, _, _, _ = env.play(phenome)
@@ -125,7 +172,7 @@ def run_experiment(experiment_name, crossover):
                 ops.clone,
 
                 crossover,
-                mutate_gaussian(std=0.05, expected_num_mutations='isotropic'),
+                mutate_gaussian(std=1, expected_num_mutations='isotropic'),
 
                 ops.evaluate,
                 ops.pool(size=POPULATION_SIZE),

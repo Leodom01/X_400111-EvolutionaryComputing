@@ -1,7 +1,7 @@
 from environment import eval_environment
 import numpy as np
 
-_, env = eval_environment([2])
+_, env = eval_environment([6])
 
 base = "./data/2pt_crossover"
 for i in range(10):

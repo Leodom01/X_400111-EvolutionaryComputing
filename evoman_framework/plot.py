@@ -3,14 +3,22 @@ import matplotlib.pyplot as plt
 
 import os
 
+# data_dir = "./data.distruction"
 data_dir = "./data"
+# data_dir = "./data.distruction"
+# data_dir = "./data.steady.enemy6"
+
 experimens_directories = os.listdir(data_dir)
 
 print(f"Found experiments: {experimens_directories}")
 
-fig, axs = plt.subplots(2)
+fig, axs = plt.subplots(3)
 
 for experiment_name in experimens_directories:
+	if experiment_name not in ["2pt_crossover", 
+							   # "whole_arithmetic_recombination_07",
+							   # "random_arithmetic_recombination",
+							   "whole_arithmetic_recombination"]: continue
 
 	dir = f"{data_dir}/{experiment_name}"
 	experiments_files = os.listdir(dir)
@@ -60,10 +68,10 @@ for experiment_name in experimens_directories:
 
 
 	plot_column(axs[0], experiments, "mean_fitness")
-	# plot_column(axs[0], experiments, "max_fitness")
+	plot_column(axs[1], experiments, "max_fitness")
 	# plot_column(axs[0], experiments, "min_fitness")
 	# plot_column(axs[2], experiments, "std_fitness")
-	plot_column(axs[1], experiments, "sq_disance_diversity")
+	plot_column(axs[2], experiments, "sq_disance_diversity")
 
 fig.show()
 plt.show()
