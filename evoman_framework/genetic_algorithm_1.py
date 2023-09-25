@@ -23,16 +23,18 @@ def dump_it(run_numb,matrix_of_run,name):
     df = pd.DataFrame(matrix_of_run,columns=header)
     df.to_csv(os.path.join("data/"+name, "run-"+str(run_numb)+".csv"), index=False)
     
-def get_L1(fit_scores):
+def get_L1(population):
     
-    centroid = np.mean(fit_scores)
+    distance_each_point_from_centroid=[]
+    avg_of_line=[]
 
-    temp_array=fit_scores
-
-    #remove negatives
-    distance_each_point_from_centroid= np.abs(temp_array-centroid)
-
-    L1_result = np.mean(distance_each_point_from_centroid)
+    for cent in population:
+        centroid_of_line = np.mean(cent)
+        for element in cent:
+            distance_each_point_from_centroid= np.append(distance_each_point_from_centroid,np.abs(element-centroid_of_line))
+        avg_of_line=np.append(avg_of_line,np.mean(distance_each_point_from_centroid))
+    
+    L1_result=np.mean(avg_of_line)
 
     return L1_result
 
@@ -243,7 +245,7 @@ def run_experiments(n, enemy, use_2pt_crossover=True, use_plus_selection=True):
             #save_on_file(name,fit_scores,np.argmax(fit_scores),np.mean(fit_scores),np.std(fit_scores),gen)
             #two times best fitness passed?
             #square distance diversity I imagined on fitness temporary fixed to 1
-            temp_matrix_for_dumping = np.append(temp_matrix_for_dumping, [[gen,np.max(fit_scores),np.mean(fit_scores),np.std(fit_scores),np.min(fit_scores),np.max(fit_scores),get_L1(fit_scores)]], axis=0) 
+            temp_matrix_for_dumping = np.append(temp_matrix_for_dumping, [[gen,np.max(fit_scores),np.mean(fit_scores),np.std(fit_scores),np.min(fit_scores),np.max(fit_scores),get_L1(population)]], axis=0) 
             
             #why 10 parents?
             parents = np.array([parent for parent in tournament_selection(parent_size, tournament_size, population, fit_scores)])
