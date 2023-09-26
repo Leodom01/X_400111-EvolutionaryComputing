@@ -16,6 +16,17 @@ from environment import training_environment
 import time
 import math
 
+# HYPER PARAMETERS
+MAX_GENERATIONS = 30
+POPULATION_SIZE = 100
+ELITISM = 0
+# END HYPER PARAMETERS
+
+# META PARAMETERS
+TRIES = 10
+ENEMY = 7
+# END META PARAMETERS
+
 @curry
 @ops.iteriter_op
 def whole_arithmetic_recombination(next_individual, alpha = 0.5):
@@ -84,37 +95,27 @@ def no_crossover(next_individual):
         yield child1
         yield child2
 
-# HYPER PARAMETERS
-MAX_GENERATIONS = 50
-POPULATION_SIZE = 100
-ELITISM = 0
-# END HYPER PARAMETERS
-
-# META PARAMETERS
-TRIES = 10
-# END META PARAMETERS
-
 # EXPERIMENTS
 
 experiments = [
     ("2pt_crossover", ops.n_ary_crossover(num_points=2)),
-    ("uniform_crossover", ops.uniform_crossover),
+    # ("uniform_crossover", ops.uniform_crossover),
     ("whole_arithmetic_recombination", whole_arithmetic_recombination),
-    ("whole_arithmetic_recombination_07", whole_arithmetic_recombination(
-        alpha=0.7
-    )), # type: ignore
-    ("whole_arithmetic_recombination_09", whole_arithmetic_recombination(
-        alpha=0.9
-    )), # type: ignore
-    ("random_arithmetic_recombination", random_arithmetic_recombination),
-    ("no_crossover", no_crossover),
+    # ("whole_arithmetic_recombination_07", whole_arithmetic_recombination(
+    #     alpha=0.7
+    # )), # type: ignore
+    # ("whole_arithmetic_recombination_09", whole_arithmetic_recombination(
+    #     alpha=0.9
+    # )), # type: ignore
+    # ("random_arithmetic_recombination", random_arithmetic_recombination),
+    # ("no_crossover", no_crossover),
 ]
 
 # To run pygame headless
 import os
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-neurons_number, env = training_environment([6])
+neurons_number, env = training_environment([ENEMY])
 
 def evaluate(phenome):
     f, _, _, _ = env.play(phenome)
@@ -136,7 +137,7 @@ representation = Representation(
 
 def run_experiment(experiment_name, crossover):
 
-    dir = f"./data/{experiment_name}"
+    dir = f"./data.enemy{ENEMY}/{experiment_name}"
     if os.path.exists(dir):
         shutil.rmtree(dir)
         
@@ -172,7 +173,7 @@ def run_experiment(experiment_name, crossover):
                 ops.clone,
 
                 crossover,
-                mutate_gaussian(std=1, expected_num_mutations='isotropic'),
+                mutate_gaussian(std=0.6, expected_num_mutations='isotropic'),
 
                 ops.evaluate,
                 ops.pool(size=POPULATION_SIZE),
