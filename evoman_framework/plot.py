@@ -1,24 +1,54 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 import os
 
-data_dir = "./data.enemy3"
-# data_dir = "./old.data/data"
+# data_dir = "./data.enemy3"
 # data_dir = "./data.enemy7"
-# data_dir = "./data.enemy6"
+data_dir = "./data.enemy6"
+
+font = {'size': 7}
+
+plt.rc('font', **font)
 
 experimens_directories = os.listdir(data_dir)
 
 print(f"Found experiments: {experimens_directories}")
 
-fig, axs = plt.subplots(3)
+def prepare_fitness_plot(ax, title):
+	plt.sca(ax)
+	plt.grid(linestyle="-")
+	plt.xlabel("Generation")
+	plt.ylabel("Fitness")
+	plt.yticks([ x * 10 for x in range(1, 11) ])
+	plt.title(title)
+	return ax
+
+def prepare_diversity_plot(ax, title):
+	plt.sca(ax)
+	plt.xlabel("Generation")
+	plt.ylabel("Diversity")
+	plt.title(title)
+	return ax
+
+def prepare_box_plot(ax, title):
+	plt.sca(ax)
+	plt.title(title)
+	return ax
+
+fig, ((mean_plot, max_plot), (diversity_plot, box_plot)) = plt.subplots(ncols=2, nrows=2)
+prepare_fitness_plot(mean_plot, "Mean fitness")
+prepare_fitness_plot(max_plot, "Maximum fitness")
+prepare_diversity_plot(diversity_plot, "Average diversity")
+prepare_box_plot(box_plot, "Best individual fitness")
+
+to_box_plot = []
+box_plot_ticks = []
 
 for experiment_name in experimens_directories:
-	# if experiment_name not in ["2pt_crossover", 
-	# 						   # "whole_arithmetic_recombination_07",
-	# 						   # "random_arithmetic_recombination",
-	# 						   "whole_arithmetic_recombination"]: continue
+	if experiment_name.endswith(".png"): continue
+	if experiment_name.endswith(".pdf"): continue
 
 	dir = f"{data_dir}/{experiment_name}"
 	experiments_files = os.listdir(dir)
@@ -38,6 +68,9 @@ for experiment_name in experimens_directories:
 			pass
 
 	print(f"Loaded {len(experiments)} experiments in {experiment_name}")
+	
+	summary = np.loadtxt(f"{dir}/summary.txt")
+	print(f"Loaded summary")
 
 	def plot_column(axis, dfs, column):
 		if dfs == []: return
@@ -51,7 +84,7 @@ for experiment_name in experimens_directories:
 
 		def plot_mean_std(axis, df, name):
 			df["avg"].plot(
-				label=f"({experiment_name}) {name}",
+				label=f"{experiment_name}",
 				ax=axis,
 				legend = True
 			)
@@ -66,12 +99,16 @@ for experiment_name in experimens_directories:
 		data = compute_mean_std(dfs, column)
 		plot_mean_std(axis, data, column)
 
+	plot_column(mean_plot, experiments, "mean_fitness")
+	plot_column(max_plot, experiments, "max_fitness")
+	plot_column(diversity_plot, experiments, "sq_disance_diversity")
+	to_box_plot.append(summary)
+	box_plot_ticks.append(experiment_name)
 
-	plot_column(axs[0], experiments, "mean_fitness")
-	plot_column(axs[1], experiments, "max_fitness")
-	# plot_column(axs[0], experiments, "min_fitness")
-	# plot_column(axs[2], experiments, "std_fitness")
-	plot_column(axs[2], experiments, "sq_disance_diversity")
 
-fig.show()
-plt.show()
+plt.sca(box_plot)
+plt.boxplot(to_box_plot)
+box_plot.set_xticklabels(box_plot_ticks)
+
+plt.tight_layout()
+plt.savefig(f"{data_dir}/plot.pdf")
