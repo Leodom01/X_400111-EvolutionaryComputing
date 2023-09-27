@@ -1,12 +1,16 @@
-from environment import eval_environment
+from environment import eval_environment, training_environment
 import numpy as np
 
-_, env = eval_environment([6])
+enemies = [3, 6, 7]
 
-base = "./data/2pt_crossover"
-for i in range(10):
-	solution = np.loadtxt(f"{base}/individual-{i}.txt")
+for enemy in enemies:
+	print("Enemy ", enemy)
+	_, env = training_environment([enemy])
 
-	f, _, _, _ = env.play(pcont=solution) # type:ignore
-	print(f"Individual {i} fitness: {f}")
+	# base = f"./data.enemy{enemy}/whole_arithmetic_recombination"
+	base = f"./data.enemy{enemy}/2pt_crossover"
+	for i in range(10):
+		solution = np.loadtxt(f"{base}/individual-{i}.txt")
+		a = env.play(pcont=solution) # type:ignore
+		print(f"Individual {i} fitness: {a}")
 
