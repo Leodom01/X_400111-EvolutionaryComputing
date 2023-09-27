@@ -9,9 +9,9 @@ from leap_ec.probe import FitnessStatsCSVProbe, pairwise_squared_distance_metric
 
 from matplotlib import shutil
 import numpy as np
-from toolz import curry
 
 from environment import training_environment
+from custom_crossover import whole_arithmetic_recombination
 
 import time
 import math
@@ -27,76 +27,7 @@ TRIES = 10
 ENEMY = 7
 # END META PARAMETERS
 
-@curry
-@ops.iteriter_op
-def whole_arithmetic_recombination(next_individual, alpha = 0.5):
-    def _whole_arithmetic_recombination(parent1, parent2, alpha):
-        tmp = alpha * parent1.genome + (1 - alpha) * parent2.genome
-        parent2.genome = (1 - alpha) * parent1.genome + alpha * parent2.genome
-        parent1.genome = tmp
-
-        return parent1, parent2
-
-    while True:
-        parent1 = next(next_individual)
-        parent2 = next(next_individual)
-
-        child1, child2 = _whole_arithmetic_recombination(
-            parent1, 
-            parent2, 
-            alpha
-        )
-
-        child1.fitness = child2.fitness = None
-
-        yield child1
-        yield child2
-
-@curry
-@ops.iteriter_op
-def random_arithmetic_recombination(next_individual):
-    def _random_arithmetic_recombination(parent1, parent2):
-        alpha = np.random.uniform()
-        tmp = alpha * parent1.genome + (1 - alpha) * parent2.genome
-        parent2.genome = (1 - alpha) * parent1.genome + alpha * parent2.genome
-        parent1.genome = tmp
-
-        return parent1, parent2
-
-    while True:
-        parent1 = next(next_individual)
-        parent2 = next(next_individual)
-
-        child1, child2 = _random_arithmetic_recombination(
-            parent1, 
-            parent2, 
-        )
-
-        child1.fitness = child2.fitness = None
-
-        yield child1
-        yield child2
-
-@curry
-@ops.iteriter_op
-def no_crossover(next_individual):
-    def _no_crossover(parent1, parent2):
-        return parent1, parent2
-
-    while True:
-        parent1 = next(next_individual)
-        parent2 = next(next_individual)
-
-        child1, child2 = _no_crossover(
-            parent1, 
-            parent2, 
-        )
-
-        yield child1
-        yield child2
-
 # EXPERIMENTS
-
 experiments = [
     ("2pt_crossover", ops.n_ary_crossover(num_points=2)),
     # ("uniform_crossover", ops.uniform_crossover),
@@ -110,6 +41,7 @@ experiments = [
     # ("random_arithmetic_recombination", random_arithmetic_recombination),
     # ("no_crossover", no_crossover),
 ]
+# END EXPERIMENTS
 
 # To run pygame headless
 import os
@@ -135,9 +67,10 @@ representation = Representation(
     initialize=create_real_vector(bounds)
 )
 
-def run_experiment(experiment_name, crossover):
+root_dir = f"./data.enemy{ENEMY}"
 
-    dir = f"./data.enemy{ENEMY}/{experiment_name}"
+def run_experiment(dir, experiment_name, crossover):
+
     if os.path.exists(dir):
         shutil.rmtree(dir)
         
@@ -198,6 +131,27 @@ def run_experiment(experiment_name, crossover):
 
         stream.close()
 
+def collect_data(dir):
+    summary = []
+    for file in os.listdir(dir):
+        if not file.startswith("individual"): continue
+
+        individual = np.loadtxt(f"{dir}/{file}")
+
+        fitness = evaluate(individual) # type: ignore
+
+        summary.append(fitness)
+
+    print("Summary of the best individuals: ", summary)
+    np.savetxt(f"{dir}/summary.txt", summary)
+
+# Running the experiments
 for experiment_name, crossover in experiments:
+    dir = f"{root_dir}/{experiment_name}"
+
     print(f"Running experiment: {experiment_name}")
-    run_experiment(experiment_name, crossover)
+    # run_experiment(dir, experiment_name, crossover)
+
+    print(f"Collecting data for: {experiment_name}")
+    collect_data(dir)
+
