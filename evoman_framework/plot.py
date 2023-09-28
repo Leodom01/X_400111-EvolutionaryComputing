@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 
 import os
 
-# data_dir = "./data.enemy3"
+data_dir = "./data.enemy3"
 # data_dir = "./data.enemy7"
-data_dir = "./data.enemy6"
+# data_dir = "./data.enemy6"
 
 font = {'size': 7}
 
@@ -41,7 +41,7 @@ fig, ((mean_plot, max_plot), (diversity_plot, box_plot)) = plt.subplots(ncols=2,
 prepare_fitness_plot(mean_plot, "Mean fitness")
 prepare_fitness_plot(max_plot, "Maximum fitness")
 prepare_diversity_plot(diversity_plot, "Average diversity")
-prepare_box_plot(box_plot, "Best individual fitness")
+prepare_box_plot(box_plot, "Best individual gain")
 
 to_box_plot = []
 box_plot_ticks = []

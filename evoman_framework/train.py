@@ -24,7 +24,7 @@ ELITISM = 0
 
 # META PARAMETERS
 TRIES = 10
-ENEMY = 7
+ENEMY = 3
 # END META PARAMETERS
 
 # EXPERIMENTS
@@ -138,9 +138,9 @@ def collect_data(dir):
 
         individual = np.loadtxt(f"{dir}/{file}")
 
-        fitness = evaluate(individual) # type: ignore
+        _, pl, el, _ = env.play(pcont=individual) # type: ignore
 
-        summary.append(fitness)
+        summary.append(pl - el)
 
     print("Summary of the best individuals: ", summary)
     np.savetxt(f"{dir}/summary.txt", summary)
@@ -150,7 +150,7 @@ for experiment_name, crossover in experiments:
     dir = f"{root_dir}/{experiment_name}"
 
     print(f"Running experiment: {experiment_name}")
-    # run_experiment(dir, experiment_name, crossover)
+    run_experiment(dir, experiment_name, crossover)
 
     print(f"Collecting data for: {experiment_name}")
     collect_data(dir)
