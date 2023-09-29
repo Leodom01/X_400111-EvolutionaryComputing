@@ -5,4 +5,5 @@
   pygame
   matplotlib
   pandas
+  scipy
 ])).env

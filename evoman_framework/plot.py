@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats as st
 
 import os
 
-data_dir = "./data.enemy3"
+# data_dir = "./data.enemy3"
 # data_dir = "./data.enemy7"
-# data_dir = "./data.enemy6"
+data_dir = "./data.enemy6"
 
 font = {'size': 7}
 
@@ -112,3 +113,12 @@ box_plot.set_xticklabels(box_plot_ticks)
 
 plt.tight_layout()
 plt.savefig(f"{data_dir}/plot.pdf")
+
+if len(box_plot_ticks) == 2:
+	# Compute p-value
+	ax_0, ax_1 = to_box_plot
+	print("P-value: ", st.ttest_ind(ax_0, ax_1)[1])
+	print("Average ", box_plot_ticks[0], ": ", np.average(ax_0))
+	print("Average ", box_plot_ticks[1], ": ", np.average(ax_1))
+	
+
