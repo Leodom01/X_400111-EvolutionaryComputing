@@ -33,7 +33,7 @@ whole_arithmetic_recombination//"run-N".csv
 to run experiment
 
 ```python
-#
+# to run experiment
 python3  train.py
 
 # run only plot
