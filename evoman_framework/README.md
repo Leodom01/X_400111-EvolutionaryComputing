@@ -1,4 +1,4 @@
-# GRP 22
+# GROUP 22
 
 Evoman assignment 1
 
