@@ -30,7 +30,7 @@ whole_arithmetic_recombination/"individual-N".txt
 whole_arithmetic_recombination//"run-N".csv
 
 ```
-to run experiment
+to run experiment:
 
 ```python
 # to run experiment
