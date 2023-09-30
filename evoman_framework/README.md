@@ -30,9 +30,18 @@ whole_arithmetic_recombination/"individual-N".txt
 whole_arithmetic_recombination//"run-N".csv
 
 ```
+to run experiment
 
+```python
+#
+python3  train.py
 
+# run only plot
+python3 plot.py
 
+# to test
+python3 test.py
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
