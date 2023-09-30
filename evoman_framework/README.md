@@ -11,7 +11,7 @@ data.enemy3
 data.enemy6
 data.enemy7
 ```
-we can be find the:
+we can find the:
 
 ```python
 # -pdf containing min_fitness, max_fitness, average_diversity and best individusal gain boxplot
