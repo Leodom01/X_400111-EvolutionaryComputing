@@ -37,23 +37,11 @@ class player_controller(Controller):
 			self.bias2 = controller[weights1_slice:weights1_slice + 5].reshape(1, 5)
 			self.weights2 = controller[weights1_slice + 5:].reshape((self.n_hidden[0], 5))
 
-	def control(self, inputs, controller):
+	def control(self, inputs, controller, neural_net):
 		# Normalises the input using min-max scaling
 		inputs = (inputs-min(inputs))/float((max(inputs)-min(inputs)))
 
-		if self.n_hidden[0]>0:
-			# Preparing the weights and biases from the controller of layer 1
-
-			# Outputs activation first layer.
-			output1 = sigmoid_activation(inputs.dot(self.weights1) + self.bias1)
-
-			# Outputting activated second layer. Each entry in the output is an action
-			output = sigmoid_activation(output1.dot(self.weights2)+ self.bias2)[0]
-		else:
-			bias = controller[:5].reshape(1, 5)
-			weights = controller[5:].reshape((len(inputs), 5))
-
-			output = sigmoid_activation(inputs.dot(weights) + bias)[0]
+		output = neural_net.activate(inputs)
 
 		# takes decisions about sprite actions
 		if output[0] > 0.5:
