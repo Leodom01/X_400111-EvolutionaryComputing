@@ -43,9 +43,14 @@ def evaluate(phenone):
   f = classic_fitness + 50 * kills - 30 * out_of_time - 30 * deaths
   return -f
 
+<<<<<<< HEAD
 def main():
   init = [0] * neuron_number
   # init = np.loadtxt("./w.txt")
+=======
+# init = [0] * neuron_number
+init = np.loadtxt("./exporing_agents/kill-8.txt")
+>>>>>>> 20724b8 (Sono troppo forte rega 2)
 
   engine = cma.CMAEvolutionStrategy(
     init,
