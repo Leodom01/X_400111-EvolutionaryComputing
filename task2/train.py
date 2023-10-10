@@ -42,7 +42,7 @@ def evaluate(phenone):
   return -f
 
 # init = [0] * neuron_number
-init = np.loadtxt("./kill-7-gainer4.txt")
+init = np.loadtxt("./exporing_agents/kill-8.txt")
 
 engine = cma.CMAEvolutionStrategy(
   init,

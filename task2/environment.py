@@ -37,8 +37,8 @@ def eval_environment(enemies=[8]):
 		player_controller=player_controller(_HIDDEN_NEURONS_NUMBER),
 		enemymode="static",
 		level=2,
-		# speed="fastest",
-		speed="normal",
+		speed="fastest",
+		# speed="normal",
 		multiplemode="yes",
 	    visuals=True
 	)
