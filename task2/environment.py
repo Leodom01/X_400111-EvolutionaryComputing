@@ -38,7 +38,7 @@ def eval_environment(enemies=[8]):
 		enemymode="static",
 		level=2,
 		speed="fastest",
-		# speed="normal",
+		#speed="normal",
 		multiplemode="yes",
 	    visuals=True
 	)

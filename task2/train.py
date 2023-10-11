@@ -8,7 +8,7 @@ from environment import training_environment
 # BEGIN META PARAMETERS
 # ENEMIES = [1, 3, 4, 6, 7]
 ENEMIES = range(1, 9)
-NGEN = 300
+NGEN = 10000
 # END META PARAMETERS
 
 # BEGIN HYPER PARAMETERS
@@ -43,14 +43,8 @@ def evaluate(phenone):
   f = classic_fitness + 50 * kills - 30 * out_of_time - 30 * deaths
   return -f
 
-<<<<<<< HEAD
 def main():
   init = [0] * neuron_number
-  # init = np.loadtxt("./w.txt")
-=======
-# init = [0] * neuron_number
-init = np.loadtxt("./exporing_agents/kill-8.txt")
->>>>>>> 20724b8 (Sono troppo forte rega 2)
 
   engine = cma.CMAEvolutionStrategy(
     init,
@@ -86,6 +80,7 @@ init = np.loadtxt("./exporing_agents/kill-8.txt")
       np.savetxt(f"tmp-agent.txt", engine.result[0])
 
     np.savetxt(f"agent--fit-{engine.result[1]}.txt", engine.result[0])
+
 if __name__ == "__main__":
   multiprocessing.freeze_support()
   main()
