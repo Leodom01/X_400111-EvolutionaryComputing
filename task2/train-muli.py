@@ -26,111 +26,119 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
-def evaluate(phenone):
-  def run_single(enemy):
-    f, _, e, _ = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
-    return f, e
-  
-  fitnesses = []
-  killed = 0
-  for (f, e) in map(run_single, ENEMIES):
-    fitnesses.append(f)
-    if e == 0: killed += 1
 
-  return tuple(fitnesses), killed
+
+def evaluate(phenone):
+    def run_single(enemy):
+        f, _, e, _ = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
+        return f, e
+
+    fitnesses = []
+    killed = 0
+    for (f, e) in map(run_single, ENEMIES):
+        fitnesses.append(f)
+        if e == 0: killed += 1
+
+    return tuple(fitnesses), killed
 
 
 def same(individual_1, individual_2):
-  return operator.eq(individual_1, individual_2).all()
-
-try:
-    cpus = multiprocessing.cpu_count()
-except NotImplementedError:
-    cpus = 1
-
-print(f"[DEBUG] Using {cpus} cpus")
+    return operator.eq(individual_1, individual_2).all()
 
 
-creator.create(
-  "FitnessMulti", 
-  base.Fitness, 
-  weights=(1.0,) * len(ENEMIES)
-)
-creator.create(
-  "Individual", 
-  np.ndarray, 
-  fitness=creator.FitnessMulti # type: ignore
-)
+def main():
+    try:
+        cpus = multiprocessing.cpu_count()
+    except NotImplementedError:
+        cpus = 1
 
-toolbox = base.Toolbox()
-toolbox.register("evaluate", evaluate)
+    print(f"[DEBUG] Using {cpus} cpus")
 
-halloffame = tools.ParetoFront(same)
+    creator.create(
+        "FitnessMulti",
+        base.Fitness,
+        weights=(1.0,) * len(ENEMIES)
+    )
+    creator.create(
+        "Individual",
+        np.ndarray,
+        fitness=creator.FitnessMulti  # type: ignore
+    )
 
-stats = tools.Statistics(lambda ind: ind.kills)
-stats.register("min", np.min)
-stats.register("max", np.max)
+    toolbox = base.Toolbox()
+    toolbox.register("evaluate", evaluate)
 
-logbook = tools.Logbook()
-logbook.header = ["gen", "nevals"] + stats.fields # type: ignore
+    halloffame = tools.ParetoFront(same)
 
-best = 0
-agent = []
+    stats = tools.Statistics(lambda ind: ind.kills)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
 
-# with ProcessPoolExecutor(cpus) as pool:
-with multiprocessing.Pool(cpus) as pool:
-  
-  toolbox.register("map", pool.map)
-  # toolbox.register("map", map)
-  def eval_population(population):
-    fitnesses = toolbox.map(toolbox.evaluate, population) # type: ignore 
-    for ind, (fit, kills) in zip(population, fitnesses):
-      ind.fitness.values = fit
-      ind.kills = kills
+    logbook = tools.Logbook()
+    logbook.header = ["gen", "nevals"] + stats.fields
 
-    #return np.max(np.average(fitnesses))
+    best = 0
+    agent = []
 
-  population = [
-    creator.Individual(x) # type: ignore
-    for x in np.random.uniform(-BOUNDS, BOUNDS, (NPOP, neuron_number))
-  ]
-  max_fitness = eval_population(population)
+    # with ProcessPoolExecutor(cpus) as pool:
+    with multiprocessing.Pool(cpus) as pool:
 
-  strat = cma.StrategyMultiObjective(
-    population,
-    mu=NPOP,
-    lambda_=130,
-    sigma=0.02,
-  )
+        toolbox.register("map", pool.map)
 
-  toolbox.register("generate", strat.generate, creator.Individual) # type: ignore
-  toolbox.register("update", strat.update)
+        # toolbox.register("map", map)
+        def eval_population(population):
+            fitnesses = toolbox.map(toolbox.evaluate, population)  # type: ignore
+            for ind, (fit, kills) in zip(population, fitnesses):
+                ind.fitness.values = fit
+                ind.kills = kills
 
-  for gen in range(NGEN):
+            # return np.max(np.average(fitnesses))
 
-    population = toolbox.generate() # type: ignore
-    eval_population(population)
+        population = [
+            creator.Individual(x)  # type: ignore
+            for x in np.random.uniform(-BOUNDS, BOUNDS, (NPOP, neuron_number))
+        ]
+        max_fitness = eval_population(population)
 
-    best_killer = max(population, key=lambda x: x.kills) # type: ignore
-    if best_killer.kills > best: # type: ignore
-      print(f"New best killer {best_killer.kills}")
-      agent = best_killer
-      np.save("best-killer-multi.txt", agent)
-      # print(agent)
+        strat = cma.StrategyMultiObjective(
+            population,
+            mu=NPOP,
+            lambda_=130,
+            sigma=0.02,
+        )
 
-    
-    halloffame.update(population)
-    record = stats.compile(population)
-    logbook.record(gen=gen, nevals=len(population), **record)
+        toolbox.register("generate", strat.generate, creator.Individual)  # type: ignore
+        toolbox.register("update", strat.update)
 
-    print(logbook.stream)
+        for gen in range(NGEN):
 
-    toolbox.update(population) # type: ignore
+            population = toolbox.generate()  # type: ignore
+            eval_population(population)
 
-print(f"Hall of fame size {len(halloffame)}")
-for idx, best in enumerate(halloffame):
-  np.savetxt(f"best_multi/best-multi-best{idx}.txt", best)
+            best_killer = max(population, key=lambda x: x.kills)  # type: ignore
+            if best_killer.kills > best:  # type: ignore
+                print(f"New best killer {best_killer.kills}")
+                agent = best_killer
+                np.save("best-killer-multi.txt", agent)
+                # print(agent)
 
-# np.savetxt(f"agent-multi-fit-{engine.result[1]}.txt", engine.result[0])
-# np.savetxt(f"agent-custom-fitness-fit-{engine.result[1]}.txt", engine.result[0])
-# np.savetxt(f"agent-custom-enemies-fit-{engine.result[1]}.txt", engine.result[0])
+            halloffame.update(population)
+            record = stats.compile(population)
+            logbook.record(gen=gen, nevals=len(population), **record)
+
+            print(logbook.stream)
+
+            toolbox.update(population)  # type: ignore
+
+    print(f"Hall of fame size {len(halloffame)}")
+    for idx, best in enumerate(halloffame):
+        np.savetxt(f"best_multi/best-multi-best{idx}.txt", best)
+
+    # np.savetxt(f"agent-multi-fit-{engine.result[1]}.txt", engine.result[0])
+    # np.savetxt(f"agent-custom-fitness-fit-{engine.result[1]}.txt", engine.result[0])
+    # np.savetxt(f"agent-custom-enemies-fit-{engine.result[1]}.txt", engine.result[0])
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    main()
