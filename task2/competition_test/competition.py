@@ -44,7 +44,6 @@ df = pd.DataFrame(columns=["fitness", "player_life", "enemy_life", "time", "grou
 enemies = range(1, n_enemies + 1)
 index = 0
 for file in os.listdir("solutions"):
-    print("Opening file: ", file)
     if file.endswith(".txt"):
         group_name = file.replace(".txt", "")
         try:

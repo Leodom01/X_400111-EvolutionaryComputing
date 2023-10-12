@@ -2,8 +2,9 @@ import os
 import cma
 import multiprocessing
 import numpy as np
-
+from functools import partial
 from environment import training_environment
+from scipy.spatial.distance import pdist
 
 # BEGIN META PARAMETERS
 # ENEMIES = [1, 3, 4, 6, 7]
@@ -23,26 +24,80 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
 
+def run_single(phenome, enemy):
+  f, p, e, _ = env.run_single(pcont=phenome, enemyn=enemy, econt=None)
+  return f, p, e
 
-def evaluate(phenone):
+def run(phenome):
+  return list(map(partial(run_single, phenome), ENEMIES))
 
-  def run_single(enemy):
-    f, p, e, _ = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
-    return f, p, e
+def compute_weights(run):
+  tot_enemy_gain = [0] * len(ENEMIES)
+  for enemy_number, (_, p_energy, e_energy) in enumerate(run):
+    tot_enemy_gain[enemy_number] += (e_energy - p_energy) + 100
 
-  fitnesses = []
-  kills = 0
-  deaths = 0
-  out_of_time = 0
-  for (f, p, e) in map(run_single, ENEMIES):
-    fitnesses.append(f)
-    if e == 0: kills += 1
-    if p == 0: deaths += 1
-    if p != 0 and e != 0: out_of_time += 1
+  tot_gain = sum(tot_enemy_gain)
+  return list(map(lambda gain: gain / tot_gain, tot_enemy_gain))
 
-  classic_fitness = np.average(fitnesses) - np.std(fitnesses)
-  f = classic_fitness + 50 * kills - 30 * out_of_time - 30 * deaths
-  return -f
+def compute_fitness(runs, weights, generation_number):
+  def compute(run):
+    fitnesses = []
+    n_kills = 0
+    n_deaths = 0
+    n_timeouts = 0
+    for f, p_energy, e_energy in run:
+      fitnesses.append(f)
+      if p_energy == 0:
+        n_deaths += 1
+      if e_energy == 0:
+        n_kills += 1
+      if p_energy != 0 and e_energy != 0:
+        n_timeouts += 1
+    
+    # std_avg = np.average(fitnesses)
+    w_avg = np.average(fitnesses, weights=weights) \
+          - np.sqrt(np.cov(fitnesses, aweights=weights))
+    # blend = generation_number / NGEN
+    base_fit = w_avg #std_avg * (1 - blend)  + w_avg * blend * 2 
+    base_fit += 100 * n_kills
+    return - base_fit
+
+  return list(map(compute, runs))
+
+def compute_gain(run):
+  tot_gain = []
+  # print(run)
+  for (_, p_energy, e_energy) in run:
+    tot_gain.append(p_energy - e_energy)
+  return np.average(tot_gain)
+
+def compute_stats(runs):
+  def compute(run):
+    fitnesses = []
+    n_kills = 0
+    n_deaths = 0
+    n_timeouts = 0
+    for f, p_energy, e_energy in run:
+      fitnesses.append(f)
+      if p_energy == 0:
+        n_deaths += 1
+      if e_energy == 0:
+        n_kills += 1
+      if p_energy != 0 and e_energy != 0:
+        n_timeouts += 1
+    
+    base_fit = np.average(fitnesses) - np.std(fitnesses)
+    return (- base_fit, n_kills)
+
+  return list(map(compute, runs))
+
+
+def compute_diversity(solutions):
+  pop = np.array(solutions)
+  distances = pdist(pop, "sqeuclidean")
+  return np.sum(distances)
+
+
 
 def main():
   # init = [0] * neuron_number
