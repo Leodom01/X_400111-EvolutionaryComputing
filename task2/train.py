@@ -34,7 +34,13 @@ def evaluate(phenone):
   kills = 0
   deaths = 0
   out_of_time = 0
-  for (f, p, e) in map(run_single, ENEMIES):
+  for enemy in ENEMIES:
+    (f, p, e) = run_single(enemy)
+
+    # Enemy 1 is the hardest to beat, sometimes we want to make its fitness more important
+    if enemy == 1:
+      f = f*1.5
+
     fitnesses.append(f)
     if e == 0: kills += 1
     if p == 0: deaths += 1
@@ -100,8 +106,13 @@ def main():
     # np.savetxt(f"agent-custom-enemies-fit-{engine.result[1]}.txt", engine.result[0])
     print("Completed run number: ", run_number)
 
-  print("Agent saved in leo-best.txt")
-  np.savetxt(f"leo-best.txt", best_agent)
+    if evaluate(best_agent) > evaluate(np.loadtxt("./leo-best.txt")):
+      print("Agent saved in leo-best.txt")
+      np.savetxt(f"leo-best.txt", best_agent)
+    else:
+      print("The agent currently in leo-best is still better than the current best agent of this run.")
+
+
 
 
 if __name__ == "__main__":
