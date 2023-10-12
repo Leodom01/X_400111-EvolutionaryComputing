@@ -28,6 +28,19 @@ def run_single(phenome, enemy):
   f, p, e, _ = env.run_single(pcont=phenome, enemyn=enemy, econt=None)
   return f, p, e
 
+def evaluate(phenone):
+  def run_single(enemy):
+    f, _, e, _ = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
+    return f, e
+
+  fitnesses = []
+  killed = 0
+  for (f, e) in map(run_single, ENEMIES):
+    fitnesses.append(f)
+    if e == 0: killed += 1
+
+  return tuple(fitnesses), killed
+
 def run(phenome):
   return list(map(partial(run_single, phenome), ENEMIES))
 

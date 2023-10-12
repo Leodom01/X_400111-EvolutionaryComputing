@@ -2,7 +2,7 @@ from environment import eval_environment
 import numpy as np
 
 enemies = range(1, 9)
-agent = np.loadtxt("./exporing_agents/kill-8-bestgain9.txt")
+agent = np.loadtxt("./leo-best.txt")
 _, env = eval_environment(enemies)
 
 enemy_killed = 0
