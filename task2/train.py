@@ -64,6 +64,8 @@ def main():
     except NotImplementedError:
       cpus = 1
 
+    print("Running on ", cpus, " processors!")
+
     pool = multiprocessing.Pool(processes=cpus)
 
     # for i in range(NGEN):
@@ -77,6 +79,7 @@ def main():
       average_fitness = - np.average(fitness)
       global_best = - engine.result[1]
 
+
       print(
         f"Generation {i}\t"
         f"max fitness: {current_best_fitness}\t"
@@ -86,6 +89,8 @@ def main():
 
       if current_best_fitness >= global_best:
         np.savetxt(f"tmp-agent.txt", engine.result[0])
+        print("New agent saved in tmp-agent.txt")
+        best_agent = engine.result[0]
 
       i += 1
 
@@ -95,7 +100,8 @@ def main():
     # np.savetxt(f"agent-custom-enemies-fit-{engine.result[1]}.txt", engine.result[0])
     print("Completed run number: ", run_number)
 
-  np.savetxt(f"leo-best.txt", engine.result[0])
+  print("Agent saved in leo-best.txt")
+  np.savetxt(f"leo-best.txt", best_agent)
 
 
 if __name__ == "__main__":

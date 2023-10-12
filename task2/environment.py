@@ -17,7 +17,8 @@ def training_environment(enemies=[8]):
 		level=2,
 		speed="fastest",
 		multiplemode="yes",
-	    visuals=False
+	    visuals=False,
+		clockprec="high"
 	)
 
 	neuron_number = (env.get_num_sensors() + 1) * _HIDDEN_NEURONS_NUMBER \
