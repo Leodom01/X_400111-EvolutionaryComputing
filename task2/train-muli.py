@@ -10,7 +10,6 @@ from deap import base, creator, tools
 from environment import training_environment
 
 # BEGIN META PARAMETERS
-# ENEMIES = [1, 3, 4, 6, 7]
 ENEMIES = range(1, 9)
 NGEN = 100
 BOUNDS = 1
@@ -27,7 +26,8 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
 
-
+# Evaluates a single individual against all the enemies
+# Returns a tuple with fitnesses gained from each enemy battle and the number of enemy defeated
 def evaluate(phenone):
     def run_single(enemy):
         f, _, e, _ = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
@@ -41,7 +41,7 @@ def evaluate(phenone):
 
     return tuple(fitnesses), killed
 
-
+# Operator to define quality among individuals
 def same(individual_1, individual_2):
     return operator.eq(individual_1, individual_2).all()
 
@@ -85,7 +85,6 @@ def main():
 
         toolbox.register("map", pool.map)
 
-        # toolbox.register("map", map)
         def eval_population(population):
             fitnesses = toolbox.map(toolbox.evaluate, population)  # type: ignore
             for ind, (fit, kills) in zip(population, fitnesses):
