@@ -47,7 +47,7 @@ def evaluate(phenone):
 def main():
   # init = [0] * neuron_number
 
-  for _ in range(RUN_NUMBER):
+  for run_number in range(RUN_NUMBER):
 
     init = np.loadtxt("./tmp-agent.txt")
 
@@ -93,6 +93,7 @@ def main():
     pool.close()
     # np.savetxt(f"agent-custom-fitness-fit-{engine.result[1]}.txt", engine.result[0])
     # np.savetxt(f"agent-custom-enemies-fit-{engine.result[1]}.txt", engine.result[0])
+    print("Completed run number: ", run_number)
 
   np.savetxt(f"leo-best.txt", engine.result[0])
 
