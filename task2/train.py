@@ -8,8 +8,10 @@ from scipy.spatial.distance import pdist
 
 # BEGIN META PARAMETERS
 # ENEMIES = [1, 3, 4, 6, 7]
-ENEMIES = range(1, 9)
-NGEN = 300
+# EASY
+ENEMIES = [1, 2, 5, 8]
+# ENEMIES = range(1, 9)
+NGEN = 100
 # END META PARAMETERS
 
 # BEGIN HYPER PARAMETERS
@@ -30,18 +32,15 @@ def run_single(phenome, enemy):
 def run(phenome):
   return list(map(partial(run_single, phenome), ENEMIES))
 
-def compute_weights(runs):
+def compute_weights(run):
   tot_enemy_gain = [0] * len(ENEMIES)
-  for run in runs:
-    for enemy_number, (_, p_energy, e_energy) in enumerate(run):
-      tot_enemy_gain[enemy_number] += (e_energy - p_energy)
+  for enemy_number, (_, p_energy, e_energy) in enumerate(run):
+    tot_enemy_gain[enemy_number] += (e_energy - p_energy) + 100
 
   tot_gain = sum(tot_enemy_gain)
   return list(map(lambda gain: gain / tot_gain, tot_enemy_gain))
 
 def compute_fitness(runs, weights, generation_number):
-  weights = compute_weights(runs)
-
   def compute(run):
     fitnesses = []
     n_kills = 0
@@ -56,10 +55,22 @@ def compute_fitness(runs, weights, generation_number):
       if p_energy != 0 and e_energy != 0:
         n_timeouts += 1
     
-    base_fit = np.average(fitnesses, weights=weights)
+    # std_avg = np.average(fitnesses)
+    w_avg = np.average(fitnesses, weights=weights) \
+          - np.sqrt(np.cov(fitnesses, aweights=weights))
+    # blend = generation_number / NGEN
+    base_fit = w_avg #std_avg * (1 - blend)  + w_avg * blend * 2 
+    base_fit += 100 * n_kills
     return - base_fit
 
   return list(map(compute, runs))
+
+def compute_gain(run):
+  tot_gain = []
+  # print(run)
+  for (_, p_energy, e_energy) in run:
+    tot_gain.append(p_energy - e_energy)
+  return np.average(tot_gain)
 
 def compute_stats(runs):
   def compute(run):
@@ -105,6 +116,7 @@ def main():
   except NotImplementedError:
     cpus = 1
 
+  weights = [1 / len(ENEMIES)] * len(ENEMIES)
   with multiprocessing.Pool(processes=cpus) as pool:
 
     for i in range(NGEN):
@@ -113,10 +125,12 @@ def main():
       results = pool.map(run, solutions)
      
       stats = compute_stats(results)
+      fitness = compute_fitness(results, weights, i)
+      best_idx = np.argmax(fitness)
+
       classical_fitness, kills = map(list, zip(*stats))
 
-      weights = compute_weights(results)
-      fitness = compute_fitness(results, weights, i)
+      weights = compute_weights(results[best_idx])
 
       engine.tell(solutions, fitness)
 
@@ -126,13 +140,14 @@ def main():
       current_best_classical_fitness = - np.min(classical_fitness)
       current_average_classical_fitness = - np.average(classical_fitness)
       diversity = compute_diversity(solutions)
+      current_best_gain = compute_gain(results[best_idx])
 
       global_best = - engine.result[1]
 
       print(
         f"Generation {i}\t"
         f"max fitness: {current_best_fitness} "
-        f"(classic: {current_best_classical_fitness})\t"
+        f"(classic: {current_best_classical_fitness}, gain:  {current_best_gain})\t"
         f"average fitness: {current_average_fitness} "
         f"(classic: {current_average_classical_fitness})\t"
         f"kills: {max_kills}\t"
