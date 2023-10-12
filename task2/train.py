@@ -37,10 +37,6 @@ def evaluate(phenone):
   for enemy in ENEMIES:
     (f, p, e) = run_single(enemy)
 
-    # Enemy 1 is the hardest to beat, sometimes we want to make its fitness more important
-    if enemy == 1:
-      f = f*1.5
-
     fitnesses.append(f)
     if e == 0: kills += 1
     if p == 0: deaths += 1
@@ -48,6 +44,15 @@ def evaluate(phenone):
 
   classic_fitness = np.average(fitnesses) - np.std(fitnesses)
   f = classic_fitness + 50 * kills - 30 * out_of_time - 30 * deaths
+
+  # Enemy 1 is the hardest to beat, sometimes we want to make its fitness more important
+  if enemy == 1:
+    f = f * 3
+
+  # We really want to get all the enemies killed
+  if kills == 8:
+    f = f*2
+
   return -f
 
 def main():
