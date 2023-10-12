@@ -4,6 +4,7 @@ import multiprocessing
 import numpy as np
 from functools import partial
 from environment import training_environment
+from scipy.spatial.distance import pdist
 
 # BEGIN META PARAMETERS
 # ENEMIES = [1, 3, 4, 6, 7]
@@ -80,6 +81,14 @@ def compute_stats(runs):
 
   return list(map(compute, runs))
 
+
+def compute_diversity(solutions):
+  pop = np.array(solutions)
+  distances = pdist(pop, "sqeuclidean")
+  return np.sum(distances)
+
+
+
 def main():
   init = [0] * neuron_number
 
@@ -116,6 +125,7 @@ def main():
       current_average_fitness = - np.average(fitness)
       current_best_classical_fitness = - np.min(classical_fitness)
       current_average_classical_fitness = - np.average(classical_fitness)
+      diversity = compute_diversity(solutions)
 
       global_best = - engine.result[1]
 
@@ -126,6 +136,7 @@ def main():
         f"average fitness: {current_average_fitness} "
         f"(classic: {current_average_classical_fitness})\t"
         f"kills: {max_kills}\t"
+        f"diversity: {diversity}\t"
         f"best of all time: {global_best}"
       )
 
