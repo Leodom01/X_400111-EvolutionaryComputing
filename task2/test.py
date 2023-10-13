@@ -7,28 +7,17 @@ _, env = eval_environment(enemies)
 
 enemy_killed = 0
 tot_player_life = 0
+duration = 0
+gain = []
 for enemy in enemies:
   f, p, e, t = env.run_single(pcont=agent, enemyn=enemy, econt=None)
   print(f"Enemy {enemy}, fitness: {f}, player: {p}, enemy: {e}")
   if e == 0:
     enemy_killed += 1
+  duration += t
   tot_player_life += p
+  gain.append(p - e)
+gain = np.sum(gain)
 
-print("Tmp Agent:")
-print(f"We killed {enemy_killed} enemies with total player life {tot_player_life}")
-
-agent = np.loadtxt("./leo-best.txt")
-_, env = eval_environment(enemies)
-
-enemy_killed = 0
-tot_player_life = 0
-for enemy in enemies:
-  f, p, e, t = env.run_single(pcont=agent, enemyn=enemy, econt=None)
-  print(f"Enemy {enemy}, fitness: {f}, player: {p}, enemy: {e}")
-  if e == 0:
-    enemy_killed += 1
-  tot_player_life += p
-
-print("Leo best:")
-print(f"We killed {enemy_killed} enemies with total player life {tot_player_life}")
-	
+print(f"We killed {enemy_killed} enemies with total player life {int(tot_player_life)} (max: {800}) in {duration} seconds")
+print(f"Gain value is {int(gain)}")

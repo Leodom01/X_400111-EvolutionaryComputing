@@ -14,7 +14,7 @@ RUN_NUMBER = 5
 # END META PARAMETERS
 
 # BEGIN HYPER PARAMETERS
-INITIAL_SIGMA = 0.2
+INITIAL_SIGMA = 0.05
 NPOP = 100
 # END HYPER PARAMETERS
 
@@ -24,35 +24,29 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
 
+
 def evaluate(phenone):
 
   def run_single(enemy):
-    f, p, e, _ = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
-    return f, p, e
+    f, p, e, t = env.run_single(pcont=phenone, enemyn=enemy, econt=None)
+    return f, p, e, t
 
   fitnesses = []
   kills = 0
   deaths = 0
-  out_of_time = 0
-  for enemy in ENEMIES:
-    (f, p, e) = run_single(enemy)
-
+  time = 0
+  gain = []
+  phealth = 0
+  for (f, p, e, t) in map(run_single, ENEMIES):
     fitnesses.append(f)
+    phealth += p
+    gain.append(p - e)
     if e == 0: kills += 1
     if p == 0: deaths += 1
-    if p != 0 and e != 0: out_of_time += 1
+    if p != 0 and e != 0: time += t
 
   classic_fitness = np.average(fitnesses) - np.std(fitnesses)
-  f = classic_fitness + 50 * kills - 30 * out_of_time - 30 * deaths
-
-  # Enemy 1 is the hardest to beat, sometimes we want to make its fitness more important
-  if enemy == 1:
-    f = f * 3
-
-  # We really want to get all the enemies killed
-  if kills == 8:
-    f = f*2
-
+  f = 50 * kills + np.sum(gain)/3
   return -f
 
 def main():
@@ -60,7 +54,7 @@ def main():
 
   for run_number in range(RUN_NUMBER):
 
-    init = np.loadtxt("./tmp-agent.txt")
+    init = np.loadtxt("./leo-best.txt")
 
     engine = cma.CMAEvolutionStrategy(
       init,
