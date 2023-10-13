@@ -1,3 +1,4 @@
+# type: ingore
 import os
 import cma
 import multiprocessing
@@ -7,17 +8,26 @@ from environment import training_environment
 from scipy.spatial.distance import pdist
 
 # BEGIN META PARAMETERS
+
 # ENEMIES = [1, 3, 4, 6, 7]
-# EASY
-ENEMIES = [1, 2, 5, 8]
+ENEMIES = [2, 5, 8]
 # ENEMIES = range(1, 9)
+
 NGEN = 100
+
+FITNESS_FUNCTION = "custom"
+# FITNESS_FUNCTION = "classic"
+
 # END META PARAMETERS
 
 # BEGIN HYPER PARAMETERS
 INITIAL_SIGMA = 0.2
 NPOP = 100
 # END HYPER PARAMETERS
+
+if FITNESS_FUNCTION not in ("custom", "classic"):
+  print(f"Invalid fitness function: {FITNESS_FUNCTION}")
+  exit(-1)
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -35,7 +45,7 @@ def run(phenome):
 def compute_weights(run):
   tot_enemy_gain = [0] * len(ENEMIES)
   for enemy_number, (_, p_energy, e_energy) in enumerate(run):
-    tot_enemy_gain[enemy_number] += (e_energy - p_energy) + 100
+    tot_enemy_gain[enemy_number] += e_energy
 
   tot_gain = sum(tot_enemy_gain)
   return list(map(lambda gain: gain / tot_gain, tot_enemy_gain))
@@ -55,12 +65,11 @@ def compute_fitness(runs, weights, generation_number):
       if p_energy != 0 and e_energy != 0:
         n_timeouts += 1
     
-    # std_avg = np.average(fitnesses)
     w_avg = np.average(fitnesses, weights=weights) \
           - np.sqrt(np.cov(fitnesses, aweights=weights))
     # blend = generation_number / NGEN
     base_fit = w_avg #std_avg * (1 - blend)  + w_avg * blend * 2 
-    base_fit += 100 * n_kills
+    # base_fit += 100 * n_kills
     return - base_fit
 
   return list(map(compute, runs))
@@ -98,8 +107,6 @@ def compute_diversity(solutions):
   distances = pdist(pop, "sqeuclidean")
   return np.sum(distances)
 
-
-
 def main():
   init = [0] * neuron_number
 
@@ -131,8 +138,11 @@ def main():
       classical_fitness, kills = map(list, zip(*stats))
 
       weights = compute_weights(results[best_idx])
-
-      engine.tell(solutions, fitness)
+      
+      if FITNESS_FUNCTION == "custom":
+        engine.tell(solutions, fitness)
+      else:
+        engine.tell(solutions, classical_fitness)
 
       max_kills = np.max(kills)
       current_best_fitness = - np.min(fitness)
@@ -146,9 +156,9 @@ def main():
 
       print(
         f"Generation {i}\t"
-        f"max fitness: {current_best_fitness} "
+        f"max custom fitness: {current_best_fitness} "
         f"(classic: {current_best_classical_fitness}, gain:  {current_best_gain})\t"
-        f"average fitness: {current_average_fitness} "
+        f"average custom fitness: {current_average_fitness} "
         f"(classic: {current_average_classical_fitness})\t"
         f"kills: {max_kills}\t"
         f"diversity: {diversity}\t"

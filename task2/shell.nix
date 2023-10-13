@@ -18,5 +18,6 @@ in
   deap
 #  numba
   pymoo
+  scipy
   (fetchPypi "comocma" "0.5.1")
 ])).env
