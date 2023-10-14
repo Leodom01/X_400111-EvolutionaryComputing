@@ -6,6 +6,7 @@ import numpy as np
 from functools import partial
 from environment import training_environment
 from scipy.spatial.distance import pdist
+import pandas as pd
 
 # BEGIN META PARAMETERS
 
@@ -13,7 +14,7 @@ from scipy.spatial.distance import pdist
 ENEMIES = [2, 5, 8]
 # ENEMIES = range(1, 9)
 
-NGEN = 100
+NGEN = 10
 
 FITNESS_FUNCTION = "custom"
 # FITNESS_FUNCTION = "classic"
@@ -34,6 +35,20 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
+
+def create_data_folder_if_not_existant(name):
+    if not os.path.exists("data"):
+        os.makedirs("data")
+    
+    if not os.path.exists("data/"+name):
+        os.makedirs("data/"+name)
+
+def dump_it(run_numb,matrix_of_run,name):
+       
+    header = ["step", "bsf", "mean_fitness", "std_fitness", "min_fitness", "max_fitness", "sq_distance_diversity"]
+    
+    df = pd.DataFrame(matrix_of_run,columns=header)
+    df.to_csv(os.path.join("data/"+name, "run-"+str(run_numb)+".csv"), index=False)
 
 def run_single(phenome, enemy):
   f, p, e, _ = env.run_single(pcont=phenome, enemyn=enemy, econt=None)
@@ -110,6 +125,8 @@ def compute_diversity(solutions):
 def main():
   init = [0] * neuron_number
 
+  temp_matrix_for_dumping = np.empty((0,7))
+
   engine = cma.CMAEvolutionStrategy(
     init,
     INITIAL_SIGMA,
@@ -165,9 +182,15 @@ def main():
         f"best of all time: {global_best}"
       )
 
-      np.savetxt(f"tmp-agent.txt", engine.result[0])
+      temp_matrix_for_dumping = np.append(temp_matrix_for_dumping, [[i,np.max(fitness),np.mean(fitness),np.std(fitness),np.min(fitness),np.max(fitness),diversity]], axis=0) 
 
-    np.savetxt(f"agent-weights-fit-{engine.result[1]}.txt", engine.result[0])
+      create_data_folder_if_not_existant("test")
+      #np.savetxt(f"data/tmp-agent.txt", engine.result[0])
+      np.savetxt("data/test/individual-"+str(i)+".txt", engine.result[0])
+
+    np.savetxt(f"data/test/agent-weights-fit-{engine.result[1]}.txt", engine.result[0])
+    #TODO is there a master script calling various times so I can change the first variable fixed at 1?
+    dump_it(1,temp_matrix_for_dumping,"test")
 
 if __name__ == "__main__":
   multiprocessing.freeze_support()
