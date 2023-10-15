@@ -14,7 +14,7 @@ import pandas as pd
 ENEMIES = [2, 5, 8]
 # ENEMIES = range(1, 9)
 
-NGEN = 10
+NGEN = 100
 
 FITNESS_FUNCTION = "custom"
 # FITNESS_FUNCTION = "classic"
