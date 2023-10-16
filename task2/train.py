@@ -12,8 +12,8 @@ import pathlib
 
 # BEGIN HYPER PARAMETERS
 INITIAL_SIGMA = 0.2
-NPOP = 500
-NGEN = 2
+NPOP = 100
+NGEN = 20
 # END HYPER PARAMETERS
 
 FITNESS_FUNCTION = os.environ["FITNESS_FUNCTION"]
@@ -31,7 +31,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
 
-def save_run_data(data, best_agent):
+def save_run_data(data, best_agent, gain):
   savedir = f"./data/{ENEMIESNAME}/{FITNESS_FUNCTION}"
   pathlib.Path(savedir).mkdir(parents=True, exist_ok=True)
 
@@ -50,6 +50,7 @@ def save_run_data(data, best_agent):
   df = pd.DataFrame(data, columns=header)
   df.to_csv(os.path.join(savedir, f"{N_RUN}.csv"), index=False)
   np.savetxt(os.path.join(savedir, f"{N_RUN}.txt"), best_agent)
+  np.savetxt(os.path.join(savedir, f"{N_RUN}.gain"), gain)
 
 def run_single(phenome, enemy):
   f, p, e, _ = env.run_single(pcont=phenome, enemyn=enemy, econt=None)
@@ -148,6 +149,7 @@ def main():
   pool = multiprocessing.Pool(processes=cpus)
 
   for i in range(NGEN):
+    print(f"Gen {i}")
     solutions = engine.ask()
     
     results = pool.map(run, solutions)
@@ -196,7 +198,14 @@ def main():
       axis=0
     )
 
-  save_run_data(data, engine.result[0])
+  _, p, e, = run(engine.result[0])
+  gain = []
+  for p, e in zip(p, e):
+    gain.append(p - e)
+
+  save_run_data(data, engine.result[0], gain)
+  
+
 
 if __name__ == "__main__":
   multiprocessing.freeze_support()
