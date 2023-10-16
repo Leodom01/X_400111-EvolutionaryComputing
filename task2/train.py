@@ -7,24 +7,19 @@ from functools import partial
 from environment import training_environment
 from scipy.spatial.distance import pdist
 import pandas as pd
+import pathlib
 
-# BEGIN META PARAMETERS
-
-# ENEMIES = [1, 3, 4, 6, 7]
-ENEMIES = [2, 5, 8]
-# ENEMIES = range(1, 9)
-
-NGEN = 100
-
-FITNESS_FUNCTION = "custom"
-# FITNESS_FUNCTION = "classic"
-
-# END META PARAMETERS
 
 # BEGIN HYPER PARAMETERS
 INITIAL_SIGMA = 0.2
 NPOP = 100
+NGEN = 2
 # END HYPER PARAMETERS
+
+FITNESS_FUNCTION = os.environ["FITNESS_FUNCTION"]
+N_RUN = os.environ["N_RUN"]
+ENEMIESNAME = os.environ["ENEMIES"]
+ENEMIES = ENEMIESNAME.split("-")
 
 if FITNESS_FUNCTION not in ("custom", "classic"):
   print(f"Invalid fitness function: {FITNESS_FUNCTION}")
@@ -36,19 +31,25 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 neuron_number, env = training_environment(ENEMIES)
 
-def create_data_folder_if_not_existant(name):
-    if not os.path.exists("data"):
-        os.makedirs("data")
-    
-    if not os.path.exists("data/"+name):
-        os.makedirs("data/"+name)
+def save_run_data(data, best_agent):
+  savedir = f"./data/{ENEMIESNAME}/{FITNESS_FUNCTION}"
+  pathlib.Path(savedir).mkdir(parents=True, exist_ok=True)
 
-def dump_it(run_numb,matrix_of_run,name):
-       
-    header = ["step", "bsf", "mean_fitness", "std_fitness", "min_fitness", "max_fitness", "sq_distance_diversity"]
-    
-    df = pd.DataFrame(matrix_of_run,columns=header)
-    df.to_csv(os.path.join("data/"+name, "run-"+str(run_numb)+".csv"), index=False)
+  header = [
+    "step", 
+    "bsf", 
+    "mean_fitness_classic", 
+    "min_fitness_classic", 
+    "max_fitness_classic", 
+    "mean_fitness_custom", 
+    "min_fitness_custom", 
+    "max_fitness_custom", 
+    "sq_distance_diversity"
+  ]
+
+  df = pd.DataFrame(data, columns=header)
+  df.to_csv(os.path.join(savedir, f"{N_RUN}.csv"), index=False)
+  np.savetxt(os.path.join(savedir, f"{N_RUN}.txt"), best_agent)
 
 def run_single(phenome, enemy):
   f, p, e, _ = env.run_single(pcont=phenome, enemyn=enemy, econt=None)
@@ -63,6 +64,9 @@ def compute_weights(run):
     tot_enemy_gain[enemy_number] += e_energy
 
   tot_gain = sum(tot_enemy_gain)
+  if tot_gain == 0:
+    return [1 / len(ENEMIES)] * len(ENEMIES)
+
   return list(map(lambda gain: gain / tot_gain, tot_enemy_gain))
 
 def compute_fitness(runs, weights, generation_number):
@@ -125,7 +129,7 @@ def compute_diversity(solutions):
 def main():
   init = [0] * neuron_number
 
-  temp_matrix_for_dumping = np.empty((0,7))
+  data = np.empty((0,9))
 
   engine = cma.CMAEvolutionStrategy(
     init,
@@ -149,48 +153,50 @@ def main():
       results = pool.map(run, solutions)
      
       stats = compute_stats(results)
-      fitness = compute_fitness(results, weights, i)
-      best_idx = np.argmax(fitness)
+      custom_fitness = compute_fitness(results, weights, i)
+      best_idx = np.argmax(custom_fitness)
 
       classical_fitness, kills = map(list, zip(*stats))
 
       weights = compute_weights(results[best_idx])
       
       if FITNESS_FUNCTION == "custom":
-        engine.tell(solutions, fitness)
+        engine.tell(solutions, custom_fitness)
       else:
         engine.tell(solutions, classical_fitness)
 
-      max_kills = np.max(kills)
-      current_best_fitness = - np.min(fitness)
-      current_average_fitness = - np.average(fitness)
-      current_best_classical_fitness = - np.min(classical_fitness)
-      current_average_classical_fitness = - np.average(classical_fitness)
-      diversity = compute_diversity(solutions)
-      current_best_gain = compute_gain(results[best_idx])
+      
+      # header = [
+      #   "step", 
+      #   "bsf", 
+      #   "mean_fitness_classic", 
+      #   "min_fitness_classic", 
+      #   "max_fitness_classic", 
+      #   "mean_fitness_custom", 
+      #   "min_fitness_custom", 
+      #   "max_fitness_custom", 
+      #   "sq_distance_diversity"
+      # ]
 
-      global_best = - engine.result[1]
-
-      print(
-        f"Generation {i}\t"
-        f"max custom fitness: {current_best_fitness} "
-        f"(classic: {current_best_classical_fitness}, gain:  {current_best_gain})\t"
-        f"average custom fitness: {current_average_fitness} "
-        f"(classic: {current_average_classical_fitness})\t"
-        f"kills: {max_kills}\t"
-        f"diversity: {diversity}\t"
-        f"best of all time: {global_best}"
+      data = np.append(
+        data, 
+        [[
+          i,
+          engine.result[1],
+          # CLASSIC
+          - np.mean(classical_fitness),
+          - np.max(classical_fitness),
+          - np.min(classical_fitness),
+          # CSUTOM
+          - np.mean(custom_fitness),
+          - np.max(custom_fitness),
+          - np.min(custom_fitness),
+          compute_diversity(solutions)
+        ]], 
+        axis=0
       )
 
-      temp_matrix_for_dumping = np.append(temp_matrix_for_dumping, [[i,np.max(fitness),np.mean(fitness),np.std(fitness),np.min(fitness),np.max(fitness),diversity]], axis=0) 
-
-      create_data_folder_if_not_existant("test")
-      #np.savetxt(f"data/tmp-agent.txt", engine.result[0])
-      np.savetxt("data/test/individual-"+str(i)+".txt", engine.result[0])
-
-    np.savetxt(f"data/test/agent-weights-fit-{engine.result[1]}.txt", engine.result[0])
-    #TODO is there a master script calling various times so I can change the first variable fixed at 1?
-    dump_it(1,temp_matrix_for_dumping,"test")
+  save_run_data(data, engine.result[0])
 
 if __name__ == "__main__":
   multiprocessing.freeze_support()
