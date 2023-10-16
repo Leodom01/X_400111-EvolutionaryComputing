@@ -13,7 +13,7 @@ def prepare_fitness_plot(ax, title):
   plt.grid(linestyle="-")
   plt.xlabel("Generation")
   plt.ylabel("Fitness")
-  plt.yticks([ x * 10 for x in range(1, 11) ])
+  # plt.yticks([ x * 10 for x in range(1, 11) ])
   plt.title(title)
   return ax
 
@@ -40,10 +40,14 @@ for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
   prepare_diversity_plot(diversity_plot, "Average diversity")
   prepare_box_plot(box_plot, "Best individual gain")
 
+  gains_tot = []
+  labels_tot = []
+
   for fitness in ["classic", "custom"]:
     dir = f"data/{enemy}/{fitness}"
     experiments_files = os.listdir(dir)
     experiments = []
+    gains = []
 
     for experiment_file in experiments_files:
       if not experiment_file.endswith(".csv"): continue
@@ -57,6 +61,11 @@ for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
         experiments.append(df)
       except:
         pass
+    
+    for experiment_file in experiments_files:
+      if not experiment_file.endswith(".gain"): continue
+      gains.append(np.loadtxt(f"{dir}/{experiment_file}"))
+    gains = list(map(list, zip(*gains)))
 
     def plot_column(axis, dfs, column):
       if dfs == []: return
@@ -84,12 +93,22 @@ for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
 
       data = compute_mean_std(dfs, column)
       plot_mean_std(axis, data, column)
-    
-    plot_column(mean_plot, experiments, "mean_fitness_classic")
+
     plot_column(max_plot, experiments, "max_fitness_classic")
-    plot_column(mean_plot, experiments, "mean_fitness_custom")
+    plot_column(mean_plot, experiments, "mean_fitness_classic")
     plot_column(max_plot, experiments, "max_fitness_custom")
+    plot_column(mean_plot, experiments, "mean_fitness_custom")
     plot_column(diversity_plot, experiments, "sq_distance_diversity")
+
+    labels = enemy.split("-")
+    labels = list(map(lambda en: f"{fitness} {en}", labels))
+
+    gains_tot.extend(gains)
+    labels_tot.extend(labels)
+   
+  
+  box_plot.boxplot(gains_tot, labels=labels_tot)
+
   
   plt.sca(box_plot)
   plt.tight_layout()

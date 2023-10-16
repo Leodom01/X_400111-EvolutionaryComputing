@@ -13,7 +13,7 @@ import pathlib
 # BEGIN HYPER PARAMETERS
 INITIAL_SIGMA = 0.2
 NPOP = 100
-NGEN = 20
+NGEN = 500
 # END HYPER PARAMETERS
 
 FITNESS_FUNCTION = os.environ["FITNESS_FUNCTION"]
@@ -62,7 +62,7 @@ def run(phenome):
 def compute_weights(run):
   tot_enemy_gain = [0] * len(ENEMIES)
   for enemy_number, (_, p_energy, e_energy) in enumerate(run):
-    tot_enemy_gain[enemy_number] += e_energy
+    tot_enemy_gain[enemy_number] += e_energy - p_energy + 100
 
   tot_gain = sum(tot_enemy_gain)
   if tot_gain == 0:
@@ -84,7 +84,7 @@ def compute_fitness(runs, weights, generation_number):
         n_kills += 1
       if p_energy != 0 and e_energy != 0:
         n_timeouts += 1
-    
+   
     w_avg = np.average(fitnesses, weights=weights) \
           - np.sqrt(np.cov(fitnesses, aweights=weights))
     # blend = generation_number / NGEN
@@ -126,6 +126,14 @@ def compute_diversity(solutions):
   pop = np.array(solutions)
   distances = pdist(pop, "sqeuclidean")
   return np.sum(distances)
+
+def extract_gain(xx):
+  a = []
+  for en in xx:
+    _, p, e = en
+    a.append(p - e)
+
+  return a 
 
 def main():
   init = [0] * neuron_number
@@ -177,31 +185,30 @@ def main():
     #   "mean_fitness_custom", 
     #   "min_fitness_custom", 
     #   "max_fitness_custom", 
-    #   "sq_distance_diversity"
+    #   "sq_distance_dsumsumiversity"
     # ]
+    res = [[
+      i,
+      engine.result[1],
+      # CLASSIC
+      - np.mean(classical_fitness),
+      - np.max(classical_fitness),
+      - np.min(classical_fitness),
+      # CSUTOM
+      - np.mean(custom_fitness),
+      - np.max(custom_fitness),
+      - np.min(custom_fitness),
+      compute_diversity(solutions)
+    ]]
 
     data = np.append(
-      data, 
-      [[
-        i,
-        engine.result[1],
-        # CLASSIC
-        - np.mean(classical_fitness),
-        - np.max(classical_fitness),
-        - np.min(classical_fitness),
-        # CSUTOM
-        - np.mean(custom_fitness),
-        - np.max(custom_fitness),
-        - np.min(custom_fitness),
-        compute_diversity(solutions)
-      ]], 
+      data,
+      res,
       axis=0
     )
 
-  _, p, e, = run(engine.result[0])
-  gain = []
-  for p, e in zip(p, e):
-    gain.append(p - e)
+  xx = run(engine.result[0])
+  gain = extract_gain(xx)
 
   save_run_data(data, engine.result[0], gain)
   
