@@ -12,7 +12,7 @@ import pathlib
 
 # BEGIN HYPER PARAMETERS
 INITIAL_SIGMA = 0.2
-NPOP = 100
+NPOP = 500
 NGEN = 2
 # END HYPER PARAMETERS
 
@@ -145,56 +145,56 @@ def main():
     cpus = 1
 
   weights = [1 / len(ENEMIES)] * len(ENEMIES)
-  with multiprocessing.Pool(processes=cpus) as pool:
+  pool = multiprocessing.Pool(processes=cpus)
 
-    for i in range(NGEN):
-      solutions = engine.ask()
-      
-      results = pool.map(run, solutions)
-     
-      stats = compute_stats(results)
-      custom_fitness = compute_fitness(results, weights, i)
-      best_idx = np.argmax(custom_fitness)
+  for i in range(NGEN):
+    solutions = engine.ask()
+    
+    results = pool.map(run, solutions)
+   
+    stats = compute_stats(results)
+    custom_fitness = compute_fitness(results, weights, i)
+    best_idx = np.argmax(custom_fitness)
 
-      classical_fitness, kills = map(list, zip(*stats))
+    classical_fitness, kills = map(list, zip(*stats))
 
-      weights = compute_weights(results[best_idx])
-      
-      if FITNESS_FUNCTION == "custom":
-        engine.tell(solutions, custom_fitness)
-      else:
-        engine.tell(solutions, classical_fitness)
+    weights = compute_weights(results[best_idx])
+    
+    if FITNESS_FUNCTION == "custom":
+      engine.tell(solutions, custom_fitness)
+    else:
+      engine.tell(solutions, classical_fitness)
 
-      
-      # header = [
-      #   "step", 
-      #   "bsf", 
-      #   "mean_fitness_classic", 
-      #   "min_fitness_classic", 
-      #   "max_fitness_classic", 
-      #   "mean_fitness_custom", 
-      #   "min_fitness_custom", 
-      #   "max_fitness_custom", 
-      #   "sq_distance_diversity"
-      # ]
+    
+    # header = [
+    #   "step", 
+    #   "bsf", 
+    #   "mean_fitness_classic", 
+    #   "min_fitness_classic", 
+    #   "max_fitness_classic", 
+    #   "mean_fitness_custom", 
+    #   "min_fitness_custom", 
+    #   "max_fitness_custom", 
+    #   "sq_distance_diversity"
+    # ]
 
-      data = np.append(
-        data, 
-        [[
-          i,
-          engine.result[1],
-          # CLASSIC
-          - np.mean(classical_fitness),
-          - np.max(classical_fitness),
-          - np.min(classical_fitness),
-          # CSUTOM
-          - np.mean(custom_fitness),
-          - np.max(custom_fitness),
-          - np.min(custom_fitness),
-          compute_diversity(solutions)
-        ]], 
-        axis=0
-      )
+    data = np.append(
+      data, 
+      [[
+        i,
+        engine.result[1],
+        # CLASSIC
+        - np.mean(classical_fitness),
+        - np.max(classical_fitness),
+        - np.min(classical_fitness),
+        # CSUTOM
+        - np.mean(custom_fitness),
+        - np.max(custom_fitness),
+        - np.min(custom_fitness),
+        compute_diversity(solutions)
+      ]], 
+      axis=0
+    )
 
   save_run_data(data, engine.result[0])
 
