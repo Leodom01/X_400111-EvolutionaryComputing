@@ -96,8 +96,8 @@ for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
 
     plot_column(max_plot, experiments, "max_fitness_classic")
     plot_column(mean_plot, experiments, "mean_fitness_classic")
-    plot_column(max_plot, experiments, "max_fitness_custom")
-    plot_column(mean_plot, experiments, "mean_fitness_custom")
+    # plot_column(max_plot, experiments, "max_fitness_custom")
+    # plot_column(mean_plot, experiments, "mean_fitness_custom")
     plot_column(diversity_plot, experiments, "sq_distance_diversity")
 
     labels = enemy.split("-")
