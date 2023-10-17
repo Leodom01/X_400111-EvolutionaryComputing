@@ -102,11 +102,12 @@ for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
 
     labels = enemy.split("-")
     labels = list(map(lambda en: f"{fitness} {en}", labels))
-
-    gains_tot.extend(gains)
-    labels_tot.extend(labels)
-   
-  
+    
+    gains_tot.append(list(map(lambda x: np.average(x), gains)))
+    labels_tot.append(fitness)
+    
+  print(gains_tot)
+  print(labels_tot)
   box_plot.boxplot(gains_tot, labels=labels_tot)
 
   
