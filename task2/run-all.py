@@ -1,7 +1,7 @@
 import os
 
 for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
-    for fitness in ["custom"]:
+    for fitness in ["classic", "custom", "more custom"]:
         for run in range(10):
             print(f"Run {fitness} {enemy} {run}")
             os.environ["FITNESS_FUNCTION"] = fitness

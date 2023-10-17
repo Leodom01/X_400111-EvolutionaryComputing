@@ -43,7 +43,7 @@ def compute_kills(runs):
 
 for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
   print(enemy)
-  for fitness in ["classic", "custom"]:
+  for fitness in ["classic", "custom", "more custom"]:
     print(fitness)
     dir = f"data/{enemy}/{fitness}"
     experiments_files = os.listdir(dir)
