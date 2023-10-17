@@ -2,6 +2,7 @@ import os
 from environment import training_environment
 from functools import partial
 import numpy as np
+from scipy import stats
 
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
@@ -16,6 +17,10 @@ def run_single(phenome, enemy):
 
 def run(phenome):
   return list(map(partial(run_single, phenome), ENEMIES))
+
+def compute_ttest(arr1,arr2):
+  t_stat,p_stat= stats.ttest_ind(arr1,arr2)
+  return t_stat,p_stat
 
 def compute_kills(runs):
   def compute(run):
@@ -53,3 +58,5 @@ for enemy in ["1-2-3-4-5-6-7-8", "1-2-6"]:
       kills = compute_kills(run(agent))
 
       print(kills)
+
+
