@@ -88,8 +88,8 @@ def compute_fitness(runs, weights, generation_number):
     w_avg = np.average(fitnesses, weights=weights) \
           - np.sqrt(np.cov(fitnesses, aweights=weights))
     # blend = generation_number / NGEN
-    base_fit = w_avg #std_avg * (1 - blend)  + w_avg * blend * 2 
-    # base_fit += 100 * n_kills
+    base_fit = w_avg #std_avg * (1 - blend)  + w_avg * blend * 2
+    base_fit += 50 * n_kills - 30*n_timeouts - 30*n_deaths
     return - base_fit
 
   return list(map(compute, runs))
